@@ -1,0 +1,12 @@
+{
+	"Database": "./gorm.db",
+	"MasterToken": "AdminToken_Hex",
+	"Secret": "CookieToken_Hex",
+	"RPC": {
+		"Host":     "localhost:9334",
+		"Endpoint": "ws",
+		"User":     "RPC_Username",
+		"Pass":     "RPC_Password",
+		"DisableTLS": true
+	}
+}

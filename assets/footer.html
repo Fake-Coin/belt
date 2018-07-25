@@ -1,0 +1,86 @@
+{{define "footer"}}
+<div class="ui inverted vertical footer segment" {{if not .CtrlsEnabled}}style="display:none;"{{end}}>
+	<div class="ui center aligned container">
+		<div class="ui stackable inverted divided grid">
+			<div class="{{if .IsAdmin}}three{{else}}five{{end}} wide column">
+				<label>Local Controls:</label>
+				<div>
+					<audio id="belt-audio" controls="controls">
+						<source src="/audio/belt.mp3" type="audio/mp3">
+					</audio>
+					<audio id="brian-audio" controls="controls" preload="auto">
+						<source src="/audio/Brian_Has_belt.wav" type="audio/wav">
+					</audio>
+					<audio id="jury-audio" controls="controls" preload="auto">
+						<source src="/audio/Jury_has_Belt.wav" type="audio/wav">
+					</audio>
+					<audio id="rando-audio" controls="controls" preload="auto">
+						<source src="/audio/randoBELT.wav" type="audio/wav">
+					</audio>
+				</div>
+			</div>
+
+			{{if .IsAdmin}}
+			<div class="five wide column">
+				<!-- <img src="/img/Horseboy.gif"> -->
+				<div class="ui inverted segment">
+					<label for="beltsfx">Remote Audio Mode:</label>
+					<div class="ui inverted form">
+						<div class="grouped fields" style="text-align:left;">
+							<div class="field">
+								<div class="ui radio checkbox">
+									<input value="1" name="beltsfx" checked="" tabindex="0" type="radio">
+									<label>Voice</label>
+								</div>
+							</div>
+							<div class="field">
+								<div class="ui radio checkbox">
+									<input value="2" name="beltsfx" tabindex="0" type="radio">
+									<label>Belt Song (12 sec)</label>
+								</div>
+							</div>
+							<div class="field">
+								<div class="ui radio checkbox">
+									<input value="0" name="beltsfx" tabindex="0" type="radio">
+									<label>Mute</label>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			{{end}}
+			
+			<div class="{{if .IsAdmin}}eight{{else}}eleven{{end}} wide column">
+				<label for="beltsfx">Twitch Chat</label>
+				<div class="ui inverted segment">
+					<textarea id="chat-box" rows="15" style="width:100%">
+					</textarea>
+				</div>
+			</div>
+
+		</div>
+		<div class="ui inverted section divider"></div>
+		<div><i class="angle left icon"></i><i class="angle right icon"></i></div>
+	</div>
+</div>
+
+{{if not .CtrlsEnabled}}
+<div class="ui inverted vertical footer text segment">
+	<div class="ui center aligned container" style="font-size: 0.8em;">
+		<i class="angle left icon"></i><i class="angle right icon"></i>
+		<br />
+		Don't have any FAK?
+		<br />
+		Download our
+		<a href="https://play.google.com/store/apps/details?id=in.fakco.fakit">Android</a>
+		or
+		<a href="https://github.com/Fake-Coin/FakeCoin-qt/releases/latest">Desktop</a>
+		app
+		and hit up the
+		<a href="https://tap.fakco.in/">FakeCoin tap</a>.
+	</div>
+</div>
+{{end}}
+
+{{end}}

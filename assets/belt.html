@@ -1,0 +1,75 @@
+{{define "belt"}}
+{{ $adm := .IsAdmin }}
+{{ $ended := .Belt.Ended }}
+{{ $holder := .BeltHolder }}
+<div class="ui cards">
+	<div id="belt-containter" class="card">
+		<div class="extra content">
+			{{if $adm}}
+			<span class="right floated">
+				<a href="{{.Base}}/edit"><i class="edit icon"></i></a>
+			</span>
+			{{end}}
+			<!-- <div class="header">{{.Belt.Title}}</div>
+			<div class="description">{{.Belt.Message}}</div> -->
+			<div class="ui accordion field">
+				<div class="title">
+					<i class="icon info circle"></i>{{.Belt.Title}}
+				</div>
+				<div class="content field description" style="white-space:pre-wrap">
+					{{.Belt.Info}}
+				</div>
+			</div>
+		</div>
+		<div class="content">
+			<table class="ui very basic {{if not $ended}}selectable{{end}} table">
+				<tbody>
+					{{range .Belt.Options}}
+					<tr id="option-{{.ID}}" {{if not (or $adm $ended)}}onclick="openModal({{.Name}}, {{.ID}})"{{end}}>
+						<td>
+							<div class="belt-img">
+								<img src="{{ .Image }}" class="ui tiny rounded image">
+								<img {{if $adm}}onclick="setBelt({{.ID}}, this)"{{end}}
+									src="https://i.imgur.com/AM38SIy.png"
+									class="ui tiny rounded image belt {{if eq .ID $holder}}active{{end}}">
+								<div class="ui inverted inline loader" style="position: absolute;top:25px;left:25px;"></div>
+							</div>
+						</td>
+						<td {{if not $ended}}onclick="openModal({{.Name}}, {{.ID}})"{{end}}>
+							<h4 class="ui image header">
+							<div class="content">
+								{{.Name}}
+								<div class="sub header">{{if eq .Name "Brad"}}Breaks something{{end}}</div>
+							</div>
+							</h4>
+						</td>
+						<td {{if not $ended}}onclick="openModal({{.Name}}, {{.ID}})"{{end}} class="twelve wide">
+							<div class="optbar ui large progress blue" style="width:100%">
+								<div class="bar"></div>
+								<div class="label">{{.Value}}&#x1d641;</div>
+							</div>
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+		<div class="extra content">
+			<div class="left floated">
+				<i class="clock outline icon"></i>
+				{{if $ended}}Ended{{else}}Ends{{end}}
+				<span id="belt-countdown">{{.Belt.EndTime.UTC.Format "2006-01-02T15:04:05Z07:00"}}</span>
+			</div>
+			{{if $adm}}
+			<span class="right floated">
+				<a onclick="setBelt(-1)"><i class="history icon"></i> Take Belt</a>
+			</span>
+			<br />
+			<span class="right floated">
+				<a href="/belt/B/payout"><i class="money bill alternate icon"></i> Show Payout</a>
+			</span>
+			{{end}}
+		</div>
+	</div>
+</div>
+{{end}}

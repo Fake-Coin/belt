@@ -1,0 +1,34 @@
+#belt-containter {
+	width: 100%;
+}
+
+#belt-containter .title {
+	font-size: 1.2em;
+}
+
+#belt-containter .title > .icon {
+	font-size: 0.9em;
+}
+
+#belt-containter .description code {
+	white-space: pre-line;
+}
+
+.belt-img {
+	position: relative;
+	margin-bottom: 10px;
+}
+.belt-img > img:nth-child(2) {
+	position: absolute;
+	top: 30px;
+	left: 0;
+}
+
+img.belt {
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+img.belt.active {
+	opacity: 1;
+	transition: opacity 0.3s;
+}

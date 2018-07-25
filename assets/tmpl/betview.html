@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+	<title>&lt;BeltBet&gt;</title>
+	<script src="https://unpkg.com/vue@2.5.16/dist/vue.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script>
+	<script src="lib/bip32.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="lib/semantic/semantic.min.css">
+	<script
+	  src="https://code.jquery.com/jquery-3.1.1.min.js"
+	  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+	  crossorigin="anonymous"></script>
+	<script src="lib/semantic/semantic.min.js"></script>
+	<script src="App/betmodal.js"></script>
+	<script src="App/betfields2.js"></script>
+	
+	<style type="text/css">
+		.ui.container {
+			padding-top: 2em;
+			padding-bottom: 2em;
+		}
+		.bet-containter {
+			border: 1px solid black;
+			border-radius: 15px;
+
+			padding: 15px;
+			margin:20px;
+			width: 100%;
+		}
+	</style>
+</head>
+<body>
+	<div class="ui container">
+		<div class="ui text container">
+			<h2 class="ui header">&lt;BeltBet&gt;</h2>
+
+			<div class="bet-containter">
+				<table class="ui very basic selectable table" style="width:100%">
+					<thead>
+						<tr>
+							<th colspan="2" style="text-align:center;">
+								{{.Title}}
+								<p style="font-size:0.75em;white-space:pre-wrap;">{{.Message}}</p>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range .Options}}
+						<tr onclick="">
+							<td class="five wide">
+								<h4 class="ui image header">
+								<img src="{{ .Image }}" class="ui mini rounded image" style="width:64px;">
+								<div class="content">
+									{{.Name}}
+									<div class="sub header">TODO</div>
+								</div>
+								</h4>
+							</td>
+							<td class="eleven wide">
+								<div class="optbar ui large progress blue" style="width:100%">
+									<div class="bar"></div>
+									<div class="label">{{.Value}}&#x1d641;</div>
+								</div>
+							</td>
+						</tr>
+						{{end}}
+					</tbody>
+				</table>
+				<bet-modal v-if="selectedOpt" :header="selectedOpt.name" :forID="selectedID"></bet-modal>
+			</div>
+
+
+		</div>
+
+	</div>
+	
+	<script>
+		function addRow() {
+			const img = document.createElement("img");
+			img.classList.add("ui", "avatar", "image");
+			img.src = "https://i.imgur.com/AM38SIy.png";
+
+			const imgInput = document.createElement("input");
+			imgInput.type = "text";
+			imgInput.placeholder = "https://i.imgur.com/AM38SIy.png";
+			imgInput.onchange = () => img.src = imgInput.value;
+
+			const nameInput = document.createElement("input");
+			nameInput.type = "text";
+			nameInput.placeholder = "Name";
+
+			const deleteButton = document.createElement("button");
+			deleteButton.classList.add("negative", "ui", "button");
+			deleteButton.innerHTML = '<i class="times icon"></i>Delete';
+			deleteButton.onclick = function() {
+				this.parentNode.parentNode.remove();
+			};
+
+			var table = document.getElementById("myTable");
+			var row = table.insertRow();
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			var cell4 = row.insertCell(3);
+			cell4.classList.add("right", "aligned");
+			
+			cell1.appendChild(img);
+			cell2.appendChild(imgInput);
+			cell3.appendChild(nameInput);
+			cell4.appendChild(deleteButton);
+		}
+	</script>
+</body>
+</html>

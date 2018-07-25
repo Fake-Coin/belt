@@ -1,0 +1,43 @@
+{{define "payModal"}}
+<div class="ui segment modal">
+	<i class="close icon"></i>
+	<div id="modal-header" class="header">Header</div>
+	<div id="modal-alert"></div>
+
+	<div id="payout-form" class="content" style="min-height:280px;">
+		<form class="ui form" onsubmit="return false">
+			<div class="field">
+				<label>Payout Address</label>
+				<input id="payout-optionID" type="hidden">
+				<input id="payout-address" placeholder="tCjHcWQtfivANQwLQ2gD6mj5p6FvE1bJEY" type="text">
+			</div>
+			<button class="ui primary button" onclick="submitPayoutForm()">Next</button>
+		</form>
+	</div>
+
+	<div id="qr-display" class="content image">
+		<div class="ui medium image">
+			<img id="qr-img">
+		</div>
+		<div class="description">
+			<div class="ui header">Waiting for transaction.</div>
+			<p>
+				To finalize your bet send any amount to the address below.
+			</p>
+			<p><a id="qr-link"></a></p>
+		</div>
+	</div>
+
+
+	<div class="actions">
+		<div class="ui positive right labeled icon button">
+			Close
+			<i class="checkmark icon"></i>
+		</div>
+	</div>
+
+	<div id="qr-spinner" class="ui dimmer">
+		<div class="ui indeterminate text loader">Generating Unique Bet Address</div>
+	</div>
+</div>
+{{end}}

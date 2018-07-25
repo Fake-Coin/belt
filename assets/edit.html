@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+	<title>&lt;BeltBet&gt;</title>
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<script
+		src="//code.jquery.com/jquery-3.1.1.min.js"
+		integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+		crossorigin="anonymous"></script>
+	<script src="/lib/semantic/semantic.min.js"></script>
+	<script src="//momentjs.com/downloads/moment.min.js"></script>
+	<script src="//momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
+
+	<style type="text/css">
+		body {
+			display: flex;
+			min-height: 100vh;
+			flex-direction: column;
+		}
+		.ui.main.container {
+			margin-top: 2em;
+			flex: 1;
+		}
+	</style>
+</head>
+<body>
+	<div class="ui main text container">
+		<h2><a href="/" class="ui header">&lt;BeltBet&gt;</a></h2>
+
+		<h4 class="ui top attached block header">
+			Edit Belt
+		</h4>
+		<div class="ui bottom attached segment">
+			<form class="ui form" method="POST">
+				<div class="field">
+					<label>Title</label>
+					<input id="title" value="{{.Title}}" type="text" placeholder="Bet Title">
+				</div>
+				<div class="field">
+					<label>Description</label>
+					<textarea id="description" rows="4" placeholder="short description/rules.">{{.Message}}</textarea>
+				</div>
+
+				<h4 class="ui dividing header">End Time</h4>
+				<div class="fields">
+					<div class="eight wide field">
+						<label>Date</label>
+						<input id="endDate" id="endDate" value="{{.EndTime.UTC.Format `2006-01-02`}}" type="date">
+					</div>
+					<div class="eight wide field">
+						<label>Time (<span id="endTimeZone">UTC</span>)</label>
+						<input id="endTime" id="endTime" value="{{.EndTime.UTC.Format `15:04`}}" type="time">
+					</div>
+				</div>
+
+				<h4 class="ui dividing header">Options</h4>
+				<div class="fields">
+					<table class="ui tablet stackable table">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Image</th>
+								<th>Name</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody id="myTable">
+							<!--{{range .Options}}
+							<tr>
+								<td><img class="ui avatar image" src="{{.Image}}"></td>
+								<td><input value="{{.Image}}" type="text"></td>
+								<td><input value="{{.Name}}" type="text"></td>
+								<td class="right aligned"><button class="negative ui button" onclick="this.parentNode.parentNode.remove()"><i class="times icon"></i>Delete</button></td>
+							</tr>
+							{{end}}-->
+						</tbody>
+							<tfoot>
+								<tr>
+									<th colspan="4" style="text-align:right;">
+										<a class="positive ui button" onclick="addRow()"><i class="plus icon"></i>New</a>
+									</th>
+								</tr>
+						</tfoot>
+					</table>
+				</div>
+
+				<a class="ui button" onclick="postFormUpdate(this)">Save</a>
+			</form>
+		</div>
+	</div>
+
+
+	<script type="text/javascript">
+		function postFormUpdate(btn) {
+			var formData = new FormData();
+			formData.append("title", $("#title").val());
+			formData.append("description", $("#description").val());
+
+			const dateStr = $("#endDate").val() + "T" + $("#endTime").val();
+			const dateTime = moment(dateStr, moment.HTML5_FMT.DATETIME_LOCAL);
+			formData.append("endTime", dateTime.toISOString());
+
+			$(".option-row").each(function(i) {
+				formData.append("option[id][]", $(this).find('input[name=optid]').val());
+				formData.append("option[img][]", $(this).find('input[name=optimage]').val());
+				formData.append("option[name][]", $(this).find('input[name=optname]').val());
+			});
+
+			$(btn).addClass("loading");
+			fetch(window.location, {
+				method: 'POST',
+				credentials: "same-origin",
+				body: formData
+			}).then((resp) => {
+				$(btn).removeClass("loading");
+				if (!resp.ok) {
+					console.log("ERROR:", resp.text());
+					return;
+				}
+
+				return resp.json();
+			}).catch((err) => {
+				console.log(err);
+			}).then(function(msg) {
+				console.log(msg);
+				window.location = window.origin;
+			});
+		}
+		
+		const localTZ = moment.tz.guess();
+		const endTimeISO = {{.EndTime.UTC.Format "2006-01-02T15:04:05Z07:00"}};
+		
+		const endTime = moment(endTimeISO, moment.ISO_8601);
+		$("#endDate").val(endTime.format(moment.HTML5_FMT.DATE));
+		$("#endTime").val(endTime.format(moment.HTML5_FMT.TIME));
+		$("#endTimeZone").text(endTime.tz(localTZ).zoneName());
+		
+		
+		function addRow(id, name, imgSrc, keep) {
+			// const imgDiv = document.createElement("div");
+			// imgDiv.classList.add("ui", "mini", "fade", "reveal", "image");
+			// imgDiv.style.textAlign = "center";
+			// const icon = document.createElement("i");
+			// icon.classList.add("ui", "hidden", "content", "edit", "outline", "icon");
+			// icon.setAttribute('style', 'font-size:20px !important;');
+
+			const img = document.createElement("img");
+			img.classList.add("ui", "avatar", "mini", "image"); //, "visible", "content");
+			img.src = imgSrc || "https://i.imgur.com/AM38SIy.png";
+
+			const idField = document.createElement("input");
+			idField.name = "optid"
+			idField.type = "hidden";
+			idField.value = id || -1;
+
+			const imgInput = document.createElement("input");
+			imgInput.name = "optimage"
+			imgInput.type = "text";
+			imgInput.placeholder = imgSrc || "https://i.imgur.com/AM38SIy.png";
+			imgInput.value = imgSrc || "";
+			imgInput.onchange = () => img.src = imgInput.value;
+
+			const nameInput = document.createElement("input");
+			nameInput.name = "optname"
+			nameInput.type = "text";
+			nameInput.placeholder = name || "Name";
+			nameInput.value = name || "";
+
+			const deleteButton = document.createElement("button");
+			deleteButton.classList.add("negative", "ui", "button");
+			deleteButton.innerHTML = '<i class="times icon"></i>Delete';
+			deleteButton.onclick = function() {
+				this.parentNode.parentNode.remove();
+			};
+
+			var table = document.getElementById("myTable");
+			var row = table.insertRow();
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			var cell4 = row.insertCell(3);
+			cell3.classList.add("ui", "small", "input");
+			
+			if (keep) {
+				row.classList.add("option-row");
+			} else {
+				row.classList.add("option-row");
+			}
+			
+			cell4.classList.add("right", "aligned");
+			
+			// imgDiv.appendChild(img);
+			// imgDiv.appendChild(icon);
+			
+			cell1.appendChild(img);
+			cell1.appendChild(idField);
+			cell2.appendChild(imgInput);
+			cell3.appendChild(nameInput);
+			
+			if (!keep)
+				cell4.appendChild(deleteButton);
+		}
+		{{range .Options}}
+		addRow("{{.ID}}", "{{.Name}}", "{{.Image}}", true);
+		{{end}}
+	</script>
+</body>
+</html>

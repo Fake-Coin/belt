@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+	<title>&lt;BeltBet&gt;</title>
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/belt.css">
+	<script
+		src="//code.jquery.com/jquery-3.1.1.min.js"
+		integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+		crossorigin="anonymous"></script>
+	<script src="/lib/semantic/semantic.min.js"></script>
+	<script src="//momentjs.com/downloads/moment.min.js"></script>
+	<script src="/js/belt.js"></script>
+	{{if .IsAdmin}}
+	<script src="/js/belt.admin.js"></script>
+	{{end}}
+	<script src="/js/socket.js"></script>
+
+	<style type="text/css">
+		body {
+			display: flex;
+			min-height: 100vh;
+			flex-direction: column;
+		}
+		.ui.main.container {
+			margin-top: 2em;
+			flex: 1;
+		}
+		{{if .IsAdmin}}
+		img.belt        {opacity: 0.3;}
+		img.belt.active {opacity: 0.8;}
+		img.belt:hover  {opacity: 1.0;}
+		audio {
+			width: 150px;
+		}
+		{{end}}
+	</style>
+</head>
+<body>
+	<div class="ui main text container">
+		<h2><a href="/" class="ui header">&lt;BeltBet&gt;</a></h2>
+		{{template "belt" .}}
+	</div>
+
+	{{template "footer" .}}
+	{{if not .Belt.Ended}}
+		{{template "payModal" .}}
+	{{end}}
+
+	<div id="page-dimmer" class="ui dimmer">
+		<div class="ui text loader">Loading...</div>
+	</div>
+
+	<script type="text/javascript">
+		$('.ui.accordion').accordion();
+		
+		const prog = ProgressManager();
+		{{range .Belt.Options}}
+		prog.addOption({{.ID}}, {{.Value.Int}});
+		{{end}}
+
+		prog.updateAll();
+
+		const endTimeStr = $("#belt-countdown").text();
+		const endTime = moment(endTimeStr, moment.ISO_8601);
+		
+		$("#belt-countdown").text(endTime.calendar());
+
+		function stopBids() {
+			$("table.selectable").removeClass("selectable");
+			$("table.selectable td").prop('onclick', null);
+		}
+
+		function openModal(optName, optID) {
+			if (moment().isBefore(endTime)){
+				showModal(optName, optID)
+			} else {
+				stopBids();
+			}
+		}
+
+		function onMessage(evt) {
+			const msg = JSON.parse(evt.data);
+			switch (msg.type) {
+			case "beltchat":
+				$("#chat-box").val(function(index, old) { return msg.text + old; });
+				break;
+			case "beltUpdate":
+				switch (msg.sfxMode) {
+				case 1: // voice
+					if (msg.optionid == 1) {
+						$("#brian-audio").trigger('play');
+					} else if (msg.optionid == 2) {
+						$("#jury-audio").trigger('play');
+					} else {
+						$("#rando-audio").trigger('play');
+					}
+					break;
+				case 2: // song
+					const beltElm = $("#belt-audio");
+					const startVol = beltElm.prop('volume');
+
+					beltElm.on('timeupdate', function() {
+						if (this.currentTime >= 8) {
+							beltElm.animate({volume: 0}, {
+								duration: 4000,
+								complete: function() {
+									this.pause();
+									this.volume = startVol;
+								}
+							}, 1000);
+							beltElm.off('timeupdate');
+						}
+					});
+					beltElm.get(0).currentTime = 0;
+					beltElm.get(0).play();
+					break;
+				}
+
+				const optRow = $("#option-"+msg.optionid);
+				$("tr").not(optRow).find(".belt").removeClass("active");
+				optRow.find(".belt").addClass("active");
+				break;
+			case "newBet":
+				prog.addTx(msg.optionid, msg.tx);
+				prog.updateAll();
+				break;
+			case "reload":
+				window.location = window.origin;
+				break;
+			}
+		};
+
+		$(document).ready(() => {
+			$("#page-dimmer").addClass("active");
+			wsConnect(onMessage)
+		});
+		
+		if (moment().isBefore(endTime)) {
+			$("#belt-countdown").text(endTime.fromNow());
+			window.setInterval(() => {
+				$("#belt-countdown").text(endTime.fromNow());
+			}, 10000);
+		}
+	</script>
+</body>
+</html>
