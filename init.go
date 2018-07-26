@@ -1,8 +1,6 @@
 package belt
 
 import (
-	"fmt"
-
 	"html/template"
 
 	assetfs "github.com/elazarl/go-bindata-assetfs"
@@ -13,8 +11,6 @@ var editTmpl *template.Template
 var beltTmpl *template.Template
 
 func init() {
-	fmt.Println(AssetNames())
-
 	editTmpl = template.Must(template.New("edit.html").Parse(string(MustAsset("assets/edit.html"))))
 
 	beltTmpl = template.Must(template.New("index.html").Parse(string(MustAsset("assets/index.html"))))

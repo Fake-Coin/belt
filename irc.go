@@ -20,17 +20,27 @@ type LogLog struct {
 	chatLog []*ChatMsg
 }
 
-func (app *App) StartChatMonitor() {
+func (app *App) StartChatMonitor(channel string) error {
+	// TODO: remove dep or find one more configurable
+
 	client := twitch.NewClient("justinfan123123", "oauth:123123123")
 
 	client.OnNewMessage(app.OnNewChatMessage)
 
-	client.Join("nightattack")
+	errCh := make(chan error, 2)
+	client.OnConnect(func() { errCh <- nil })
 
-	err := client.Connect()
-	if err != nil {
-		log.Println(err)
-	}
+	client.Join(channel)
+
+	go func() {
+		err := client.Connect()
+		if err != nil {
+			log.Println(err)
+			errCh <- err
+		}
+	}()
+
+	return <-errCh
 }
 
 func (app *App) OnNewChatMessage(channel string, user twitch.User, message twitch.Message) {

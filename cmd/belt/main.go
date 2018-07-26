@@ -30,13 +30,21 @@ import (
 var Cfg = struct {
 	Database, Cert      string
 	MasterToken, Secret string
-	RPC                 rpcclient.ConnConfig
+
+	TwitchChannel string // dissabled if empty
+
+	Debug       bool
+	AutoMigrate bool
+
+	RPC rpcclient.ConnConfig
 }{}
 
 var store *sessions.CookieStore
 
 func init() {
 	confDir := flag.String("conf", "", "directory for database and config files")
+	debug := flag.Bool("debug", false, "enable debug logging")
+
 	flag.Parse()
 	if confDir == nil || *confDir == "" {
 		flag.PrintDefaults()
@@ -51,14 +59,22 @@ func init() {
 		log.Fatal(err)
 	}
 
+	Cfg.Debug = Cfg.Debug || (debug != nil && *debug)
+
+	if Cfg.Debug {
+		log.Println("[init] debug logging enabled")
+	}
+
 	Cfg.Database = filepath.Join(*confDir, Cfg.Database)
 	store = sessions.NewCookieStore([]byte(Cfg.Secret))
 
-	certFile, err := ioutil.ReadFile(filepath.Join(*confDir, Cfg.Cert))
-	if err != nil {
-		log.Println(err)
-	} else {
-		Cfg.RPC.Certificates = certFile
+	if !Cfg.RPC.DisableTLS {
+		certFile, err := ioutil.ReadFile(filepath.Join(*confDir, Cfg.Cert))
+		if err != nil {
+			log.Fatalf("[init] could not find RPC certificate file: %q\n", err)
+		} else {
+			Cfg.RPC.Certificates = certFile
+		}
 	}
 }
 
@@ -69,27 +85,19 @@ func main() {
 	}
 	defer db.Close()
 
-	db.Create(&belt.Belt{
-		Title:   "C U Next Tuesday",
-		Message: "this is only a test",
-		EndTime: time.Now(),
-		Options: []belt.Option{
-			{
-				Name:  "Brian",
-				Image: "https://i.imgur.com/B3gRvw5.jpg",
-			},
-			{
-				Name:  "JuRY",
-				Image: "https://i.imgur.com/4pZo7gY.jpg",
-			},
-			{
-				Name:  "Brad",
-				Image: "",
-			},
-		},
-	})
+	db.LogMode(Cfg.Debug)
 
-	// db.LogMode(true)
+	if Cfg.AutoMigrate {
+		if Cfg.Debug {
+			log.Println("[debug][AutoMigrate] checking database schema")
+		}
+
+		if err := belt.Migrate(db); err != nil {
+			log.Fatalf("[main] migration failed: %q\n", err)
+		} else if Cfg.Debug {
+			log.Println("[debug][AutoMigrate] ok")
+		}
+	}
 
 	app := belt.NewApp(db, Cfg.MasterToken)
 	app.Upgrader = websocket.Upgrader{
@@ -101,12 +109,31 @@ func main() {
 		},
 	}
 
-	go app.StartChatMonitor()
+	if Cfg.TwitchChannel != "" {
+		if Cfg.Debug {
+			log.Printf("[debug][Twitch] starting twitch chat monitor for %q\n", Cfg.TwitchChannel)
+		}
 
+		if err := app.StartChatMonitor(Cfg.TwitchChannel); err != nil {
+			log.Fatalf("[debug][Twitch] twitch connection failed: %q\n", err)
+		} else if Cfg.Debug {
+			log.Println("[debug][Twitch] ok")
+		}
+	}
+
+	if Cfg.Debug {
+		log.Println("[debug][RPC] starting FakeCoin RPC")
+	}
 	if err := app.StartRPC(&Cfg.RPC, &chaincfg.MainNetParams); err != nil {
 		log.Fatal(err)
 	}
 
+	// incase of random restarts, reload watch addresses to prevent missed transactions.
+	// This must handle duplicate mempool transactions as well as transactions that
+	// were sent and confirmed durring the restart that may not be forwarded by watcher.
+	// 1. load all addresses into mempool monitor.
+	// 2. check all addresses for past transactions.
+	// 3. merge. This can be done in the database by ingnoring duplicate errors.
 	{
 		var initBelt belt.Belt
 		res := db.Set("gorm:auto_preload", true).First(&initBelt)
@@ -131,6 +158,7 @@ func main() {
 		}
 	}
 
+	// websocket layer keep-alive
 	go func() {
 		for range time.NewTicker(1 * time.Minute).C {
 			app.Ping()
