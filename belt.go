@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -115,7 +116,7 @@ func SaveEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	belt.Title = r.FormValue("title")
-	belt.Message = r.FormValue("description")
+	belt.Message = strings.Replace(r.FormValue("description"), "\r\n", "\n", -1)
 	belt.EndTime = endTime
 
 	opts, err := getOptions(r.MultipartForm.Value)

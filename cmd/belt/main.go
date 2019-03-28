@@ -194,6 +194,7 @@ func BeltRoutes(mux *goji.Mux, app *belt.App) {
 	mux.HandleFunc(pat.Get("/:beltid"), belt.View)
 	mux.HandleFunc(pat.Get("/:beltid/ws"), app.Socket)
 	mux.HandleFunc(pat.Post("/:beltid/getaddr"), belt.GetAddr) // app
+	mux.HandleFunc(pat.Post("/:beltid/vote"), belt.PlaceVote)  // app
 
 	adminMux := goji.SubMux()
 	mux.Handle(pat.New("/:beltid/*"), adminMux)

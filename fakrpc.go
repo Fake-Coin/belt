@@ -3,8 +3,10 @@ package belt
 import (
 	"bytes"
 	"log"
+	"time"
 
 	"fakco.in/fakd/chaincfg"
+	"fakco.in/fakd/chaincfg/chainhash"
 	"fakco.in/fakd/txscript"
 	"fakco.in/fakd/wire"
 )
@@ -47,9 +49,47 @@ func (app *App) onRelevantTxAccepted(transaction []byte) {
 			continue
 		}
 
+		go app.watchConfirmations(hash, &btx)
+
 		if err := app.hub.notifyBet(bet.OptionID, btx); err != nil {
 			log.Println("[onRelevantTxAccepted]", err)
 			continue
 		}
+	}
+}
+
+func (app *App) watchConfirmations(hash chainhash.Hash, tx *BetTx) {
+	tick := time.NewTicker(1 * time.Minute)
+	defer tick.Stop()
+
+	lastUpdate := time.Now()
+	for range tick.C {
+		txInfo, err := app.rpcClient.GetRawTransactionVerbose(&hash)
+		if err != nil {
+			log.Printf("[app.watchConfirmations][%s] %s\n", hash, err)
+			continue
+		}
+
+		conf := int(txInfo.Confirmations)
+
+		if conf == tx.Confirmations {
+			if 30*time.Minute < time.Since(lastUpdate) {
+				log.Printf("[app.watchConfirmations][%s] 30m since last confirmation update\n", hash)
+				return
+			}
+			continue
+		}
+
+		res := app.db.Model(tx).Update("confirmations", conf)
+		if res.Error != nil {
+			log.Printf("[app.watchConfirmations][%s] %s\n", hash, res.Error)
+			continue
+		}
+
+		if tx.Confirmations == 6 {
+			return
+		}
+
+		lastUpdate = time.Now()
 	}
 }

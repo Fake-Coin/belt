@@ -17,6 +17,9 @@
 			min-height: 100vh;
 			flex-direction: column;
 		}
+		textarea {
+			font-family: "Courier New", Courier, monospace;
+		}
 		.ui.main.container {
 			margin-top: 2em;
 			flex: 1;
@@ -38,7 +41,7 @@
 				</div>
 				<div class="field">
 					<label>Description</label>
-					<textarea id="description" rows="4" placeholder="short description/rules.">{{.Message}}</textarea>
+					<textarea id="description" rows="8" placeholder="short description/rules.">{{.Message}}</textarea>
 				</div>
 
 				<h4 class="ui dividing header">End Time</h4>

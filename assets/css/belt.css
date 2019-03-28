@@ -14,6 +14,13 @@
 	white-space: pre-line;
 }
 
+.description > table th,
+.description > table td {
+	padding: 1px 16px 1px 16px;
+}
+.description a       { color: #4183c4 !important; }
+.description a:hover { color: #1e70bf !important; }
+
 .belt-img {
 	position: relative;
 	margin-bottom: 10px;

@@ -34,7 +34,8 @@ func (b Belt) Info() template.HTML {
 	return template.HTML(
 		blackfriday.Run([]byte(b.Message),
 			blackfriday.WithExtensions(
-				blackfriday.NoEmptyLineBeforeBlock|
+				blackfriday.HardLineBreak|
+					blackfriday.NoEmptyLineBeforeBlock|
 					blackfriday.CommonExtensions)))
 }
 
@@ -53,13 +54,15 @@ type Option struct {
 	Name  string `json:"name" gorm:"unique_index:unique_belt_option;not null"`
 	Image string `json:"image"`
 
+	Votes uint `json:"votes"`
+
 	Bets []Bet
 }
 
-func (o Option) Value() FAK {
+func (o Option) Value(minConf int) FAK {
 	var val FAK
 	for _, bet := range o.Bets {
-		val += bet.Value()
+		val += bet.Value(minConf)
 	}
 	return val
 }
@@ -76,10 +79,12 @@ type Bet struct {
 	Transactions []BetTx `json:"txs"`
 }
 
-func (b Bet) Value() FAK {
+func (b Bet) Value(minConf int) FAK {
 	var val FAK
 	for _, tx := range b.Transactions {
-		val += tx.Value
+		if minConf <= tx.Confirmations {
+			val += tx.Value
+		}
 	}
 	return val
 }
@@ -92,6 +97,8 @@ type BetTx struct {
 	Hash  string `json:"hash" gorm:"size:64;unique_index;not null"`
 	Index uint32 `json:"index" gorm:"not null"`
 	Value FAK    `json:"value" gorm:"not null"`
+
+	Confirmations int `json:"confirmations" gorm:"default:0;not null"`
 }
 
 // const HashSize = 32

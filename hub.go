@@ -123,3 +123,19 @@ func (h *Hub) notifyBet(opt uint, btx BetTx) error {
 
 	return nil
 }
+
+func (h *Hub) notifyVote(opt uint) error {
+	b, err := json.Marshal(newBetMsg{
+		Type:     "newVote",
+		OptionID: int64(opt),
+	})
+	if err != nil {
+		return err
+	}
+
+	if n := h.hub.Flood(-1, b); 0 < n {
+		log.Printf("[INFO] %d skipped\n", n)
+	}
+
+	return nil
+}

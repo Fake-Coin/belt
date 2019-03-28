@@ -55,7 +55,7 @@
 		
 		const prog = ProgressManager();
 		{{range .Belt.Options}}
-		prog.addOption({{.ID}}, {{.Value.Int}});
+		prog.addOption({{.ID}}, {{(.Value 0).Int}}, {{(.Value 1).Int}}, {{.Votes}});
 		{{end}}
 
 		prog.updateAll();
@@ -76,6 +76,21 @@
 			} else {
 				stopBids();
 			}
+		}
+
+		function placeVote(optName, optID) {
+			const req = fetch(window.location.pathname + '/vote', {
+				method: 'POST',
+				headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
+				body: 'optionID='+optID
+			}).then((resp) => {
+				if (!resp.ok) {
+					console.error(resp.statusText);
+					return
+				}
+				$("button.voting").addClass("disabled");
+				console.log(optName, resp.data);
+			});
 		}
 
 		function onMessage(evt) {
@@ -122,6 +137,10 @@
 				break;
 			case "newBet":
 				prog.addTx(msg.optionid, msg.tx);
+				prog.updateAll();
+				break;
+			case "newVote":
+				prog.incVotes(msg.optionid);
 				prog.updateAll();
 				break;
 			case "reload":

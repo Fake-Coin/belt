@@ -8,30 +8,82 @@ function ProgressManager() {
 			options.forEach((v) => { acc += v.value });
 			return acc;
 		},
-		addOption: function(id, val) {
+		totalVotes: function() {
+			var acc = 0;
+			options.forEach((v) => { acc += v.votes });
+			return acc;
+		},
+		addOption: function(id, val, conf, votes) {
 			options.set(id, {
-				elm: $("#option-"+id).find(".progress"),
-				value: val
+				betElm: $("#option-"+id).find(".optbar"),
+				value: conf,
+				voteElm: $("#option-"+id).find(".voteBar"),
+				votes: votes
 			});
 		},
 		addTx: function(id, tx) {
-			if (options.has(id)) {
-				options.get(id).value += tx.value;
+			if (!options.has(id)) {
+				return;
 			}
+			options.get(id).value += tx.value;
+			// assume confirmed for now
+			// options.get(id).confirmed += tx.value;
+
+			// if (txSet.has(tx.hash)) {
+			// 	if (0 < tx.confirmations) {
+			// 		options.get(id).confirmed += tx.value;
+			// 		txSet.delete(tx.hash);
+			// 	}
+			// 	return;
+			// }
+			//
+			// if (0 < tx.confirmations) {
+			// 	options.get(id).confirmed += tx.value;
+			// 	return;
+			// }
+			//
+			// options.get(id).value += tx.value;
+			// txSet.add(tx.hash)
+		},
+		incVotes: function(id) {
+			if (!options.has(id)) {
+				return;
+			}
+			options.get(id).votes++;
 		},
 		updateAll: function() {
+			const tVotes = this.totalVotes();
 			const total = Math.ceil(this.totalValue()/COIN);
-			options.forEach((v) => { 
-				$(v.elm).progress({
-					value: Math.floor(v.value/COIN),
+			options.forEach((v) => {
+				const val100 = Math.floor((v.value/COIN)*100);
+				// const conf100 = Math.floor((v.confirmed/COIN)*100);
+
+				var statusText = "{value}\uD835\uDE41";
+				statusText += "\xa0\xa0|\xa0";
+				statusText += v.votes+"\u2713";
+				
+				// if (val100 != conf100) {
+				// 	statusText = '{value}\uD835\uDE41' + '(' + conf100/100 + '\uD835\uDE41 confirmed)';
+				// }
+
+				$(v.betElm).progress({
+					value: val100/100,
 					total: total,
 					label: 'ratio',
 					text: {
-						ratio: '{value}\uD835\uDE41',
-						active: '{value}\uD835\uDE41',
-						success: '{value}\uD835\uDE41'
-					}
-				})
+						ratio: statusText,
+						active: statusText,
+						success: statusText
+					},
+					autoSuccess: false
+				});
+
+				$(v.voteElm).progress({
+					value: v.votes,
+					total: tVotes,
+					autoSuccess: false
+				});
+
 			});
 		},
 	};

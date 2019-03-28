@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"path"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
@@ -118,16 +121,114 @@ func View(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	host, hErr := getHost(r)
+	voted := hErr != nil || hasIP(host)
+
 	if err := beltTmpl.ExecuteTemplate(w, "index.html", struct {
 		Base         string
 		Belt         *Belt
 		IsAdmin      bool
 		CtrlsEnabled bool
 		BeltHolder   int64
-	}{r.URL.Path, belt.Belt, isAdmin, ctrl, app.hub.BeltHolder()}); err != nil {
+		HasVoted     bool
+	}{r.URL.Path, belt.Belt, isAdmin, ctrl, app.hub.BeltHolder(), voted}); err != nil {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
+	}
+}
+
+var voteIP = struct {
+	mu  *sync.RWMutex
+	set map[string]struct{}
+}{
+	mu:  new(sync.RWMutex),
+	set: make(map[string]struct{}),
+}
+
+func hasIP(host string) bool {
+	voteIP.mu.RLock()
+	defer voteIP.mu.RUnlock()
+
+	_, ok := voteIP.set[host]
+	return ok
+}
+
+func addIP(host string) {
+	voteIP.mu.Lock()
+	defer voteIP.mu.Unlock()
+	voteIP.set[host] = struct{}{}
+}
+
+func getHost(req *http.Request) (string, error) {
+	host := req.Header.Get("X-Forwarded-For")
+	if host == "" {
+		host_, _, err := net.SplitHostPort(req.RemoteAddr)
+		if err != nil {
+			return "", err
+		}
+		host = host_
+	}
+
+	return host, nil
+}
+
+func PlaceVote(w http.ResponseWriter, r *http.Request) {
+	host, err := getHost(r)
+	if err != nil || hasIP(host) {
+		log.Println("[PlaceVote]", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	app, ok := r.Context().Value("belt.app").(*App)
+	if !ok {
+		log.Println("could not find belt.app context")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	optionID, err := strconv.Atoi(r.PostFormValue("optionID"))
+	if err != nil {
+		log.Println("[PlaceVote] bad option id", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	var opt Option
+	if res := app.db.First(&opt, uint(optionID)); res.Error != nil {
+		log.Printf("[PlaceVote] Option(%d): %s\n", optionID, res.Error)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var belt Belt
+	if res := app.db.First(&belt, opt.BeltID); res.Error != nil {
+		log.Printf("[PlaceVote] Belt(%d): %s\n", opt.BeltID, res.Error)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if belt.EndTime.Before(time.Now()) {
+		log.Println(belt.EndTime)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if res := app.db.Model(&opt).Update("votes", opt.Votes+1); res.Error != nil {
+		log.Printf("[PlaceVote] Option(%d) Update: %s\n", opt.ID, res.Error)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	addIP(host)
+
+	if err := json.NewEncoder(w).Encode(opt); err != nil {
+		log.Println("[PlaceVote]:", err)
+	}
+
+	if err := app.hub.notifyVote(opt.ID); err != nil {
+		log.Println("[PlaceVote]:", err)
 	}
 }
 

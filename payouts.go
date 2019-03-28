@@ -60,7 +60,7 @@ func (app *App) legacyPayout(b *Belt, winner uint) (*wire.MsgTx, error) {
 	var winOpt Option
 	var totalVal, winVal, loseVal int64
 	for _, opt := range b.Options {
-		val := int64(opt.Value())
+		val := int64(opt.Value(1))
 		totalVal += val
 		if opt.ID == winner {
 			winOpt = opt
@@ -76,7 +76,7 @@ func (app *App) legacyPayout(b *Belt, winner uint) (*wire.MsgTx, error) {
 
 	var winBets []Bet
 	for _, bet := range winOpt.Bets {
-		if bet.Value() <= 0 {
+		if bet.Value(1) <= 0 {
 			continue
 		}
 		winBets = append(winBets, bet)
@@ -97,7 +97,7 @@ func (app *App) legacyPayout(b *Belt, winner uint) (*wire.MsgTx, error) {
 
 	var txout []*wire.TxOut
 	for _, winner := range winBets {
-		wval := int64(winner.Value())
+		wval := int64(winner.Value(1))
 		r := big.NewRat(wval, winVal)
 		fp, _ := new(big.Rat).Mul(r, subFee).Float64()
 
@@ -177,11 +177,11 @@ func (tx BetTx) WireInput() *wire.TxIn {
 }
 
 func (o Option) WireOutput(amount FAK) []*wire.TxOut {
-	optValue := o.Value()
+	optValue := o.Value(1)
 
 	var outputs []*wire.TxOut
 	for _, bet := range o.Bets {
-		propPay := (bet.Value() * amount) / optValue
+		propPay := (bet.Value(1) * amount) / optValue
 		outputs = append(outputs, wire.NewTxOut(int64(propPay), makeScript(bet.PayAddr)))
 	}
 

@@ -2,6 +2,7 @@
 {{ $adm := .IsAdmin }}
 {{ $ended := .Belt.Ended }}
 {{ $holder := .BeltHolder }}
+{{ $hasVoted := .HasVoted }}
 <div class="ui cards">
 	<div id="belt-containter" class="card">
 		<div class="extra content">
@@ -16,16 +17,16 @@
 				<div class="title">
 					<i class="icon info circle"></i>{{.Belt.Title}}
 				</div>
-				<div class="content field description" style="white-space:pre-wrap">
+				<div class="content field description">
 					{{.Belt.Info}}
 				</div>
 			</div>
 		</div>
 		<div class="content">
-			<table class="ui very basic {{if not $ended}}selectable{{end}} table">
+			<table class="ui very basic table">
 				<tbody>
 					{{range .Belt.Options}}
-					<tr id="option-{{.ID}}" {{if not (or $adm $ended)}}onclick="openModal({{.Name}}, {{.ID}})"{{end}}>
+					<tr id="option-{{.ID}}">
 						<td>
 							<div class="belt-img">
 								<img src="{{ .Image }}" class="ui tiny rounded image">
@@ -35,20 +36,36 @@
 								<div class="ui inverted inline loader" style="position: absolute;top:25px;left:25px;"></div>
 							</div>
 						</td>
-						<td {{if not $ended}}onclick="openModal({{.Name}}, {{.ID}})"{{end}}>
+						<td>
 							<h4 class="ui image header">
 							<div class="content">
 								{{.Name}}
-								<div class="sub header">{{if eq .Name "Brad"}}Breaks something{{end}}</div>
+								<div class="sub header"></div>
 							</div>
 							</h4>
 						</td>
-						<td {{if not $ended}}onclick="openModal({{.Name}}, {{.ID}})"{{end}} class="twelve wide">
+						<td class="twelve wide">
+							<div class="voteBar ui tiny green progress" style="margin-bottom:4px;">
+								<div class="bar"></div>
+							</div>
 							<div class="optbar ui large progress blue" style="width:100%">
 								<div class="bar"></div>
-								<div class="label">{{.Value}}&#x1d641;</div>
+								<div class="label">{{.Value 1}}&#x1d641;</div>
 							</div>
 						</td>
+						{{if not $ended}}
+						<td style="padding:4px;">
+							<button onclick="placeVote({{.Name}}, {{.ID}})" style="width:100%"
+								class="voting {{if $hasVoted}}disabled{{end}} ui compact tiny labeled icon button">
+								<i class="fas fa-vote-yea icon" style="font-family:'Font Awesome 5 Free';font-weight:900;"></i> Vote
+							</button>
+							<hr />
+							<button onclick="openModal({{.Name}}, {{.ID}})" style="width:100%"
+								class="ui compact tiny labeled icon button">
+								<i class="fas fa-coins icon" style="font-family:'Font Awesome 5 Free';font-weight:900;"></i> Bet
+							</button>
+						</td>
+						{{end}}
 					</tr>
 					{{end}}
 				</tbody>
