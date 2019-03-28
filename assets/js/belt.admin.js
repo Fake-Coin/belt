@@ -13,7 +13,7 @@ function setBelt(optID, beltbtn) {
 		method: 'POST',
 		credentials: "same-origin",
 		headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
-		body: "optionID="+optID+"&beltMode="+$("input[name=beltsfx]:checked").val()
+		body: "optionID="+optID
 	}).then((response) => {
 		if (!response.ok) {
 			loader.removeClass("active");

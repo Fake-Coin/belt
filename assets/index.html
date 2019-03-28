@@ -100,37 +100,6 @@
 				$("#chat-box").val(function(index, old) { return msg.text + old; });
 				break;
 			case "beltUpdate":
-				switch (msg.sfxMode) {
-				case 1: // voice
-					if (msg.optionid == 1) {
-						$("#brian-audio").trigger('play');
-					} else if (msg.optionid == 2) {
-						$("#jury-audio").trigger('play');
-					} else {
-						$("#rando-audio").trigger('play');
-					}
-					break;
-				case 2: // song
-					const beltElm = $("#belt-audio");
-					const startVol = beltElm.prop('volume');
-
-					beltElm.on('timeupdate', function() {
-						if (this.currentTime >= 8) {
-							beltElm.animate({volume: 0}, {
-								duration: 4000,
-								complete: function() {
-									this.pause();
-									this.volume = startVol;
-								}
-							}, 1000);
-							beltElm.off('timeupdate');
-						}
-					});
-					beltElm.get(0).currentTime = 0;
-					beltElm.get(0).play();
-					break;
-				}
-
 				const optRow = $("#option-"+msg.optionid);
 				$("tr").not(optRow).find(".belt").removeClass("active");
 				optRow.find(".belt").addClass("active");

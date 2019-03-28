@@ -20,14 +20,6 @@ func (app *App) SetBelt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(r.PostForm)
-	beltSFX, err := strconv.Atoi(r.PostFormValue("beltMode"))
-	if err != nil { // }|| 2 < beltSFX || beltSFX < 0 {
-		log.Println("[GetAddr] invalid audio mode", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
 	if optionID == -1 {
 		app.hub.SetHolder(int64(optionID))
 		app.hub.sendBeltUnset()
@@ -55,7 +47,7 @@ func (app *App) SetBelt(w http.ResponseWriter, r *http.Request) {
 
 	app.hub.SetHolder(int64(opt.ID))
 
-	if err := app.hub.sendBeltUpdate(opt, beltSFX); err != nil {
+	if err := app.hub.sendBeltUpdate(opt); err != nil {
 		log.Println("[SetBelt][app.sendBeltUpdate]", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

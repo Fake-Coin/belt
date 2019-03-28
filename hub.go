@@ -66,7 +66,6 @@ func (h *Hub) Ping() {
 type beltUpdateMsg struct {
 	Type     string `json:"type"`
 	OptionID int64  `json:"optionid"`
-	SFXMode  int    `json:"sfxMode"`
 }
 
 const (
@@ -75,8 +74,8 @@ const (
 	belt
 )
 
-func (h *Hub) sendBeltUpdate(opt Option, sfxMode int) error {
-	b, err := json.Marshal(beltUpdateMsg{"beltUpdate", int64(opt.ID), sfxMode})
+func (h *Hub) sendBeltUpdate(opt Option) error {
+	b, err := json.Marshal(beltUpdateMsg{"beltUpdate", int64(opt.ID)})
 	if err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func (h *Hub) sendBeltUpdate(opt Option, sfxMode int) error {
 }
 
 func (h *Hub) sendBeltUnset() error {
-	b, err := json.Marshal(beltUpdateMsg{"beltUpdate", -1, mute})
+	b, err := json.Marshal(beltUpdateMsg{"beltUpdate", -1})
 	if err != nil {
 		return err
 	}
